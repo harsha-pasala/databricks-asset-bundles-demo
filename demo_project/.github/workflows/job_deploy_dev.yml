@@ -1,0 +1,47 @@
+name: Demo Project Dev Deployment
+concurrency: 1
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  DATABRICKS_TOKEN: ${{ secrets.E2_SP_TOKEN }}
+  DATABRICKS_BUNDLE_ENV: dev
+
+jobs:
+  deploy:
+    name: "Setup Config and deploy bundle"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Get Bundle Info
+        id: bundle_info
+        working-directory: demo_project
+        run: |
+          echo "BUNDLE_NAME=$(databricks bundle validate | jq -r '.bundle.name')" >> $GITHUB_OUTPUT
+
+      - name: Deploy Bundle
+        working-directory: demo_project
+        id: deploy_bundle
+        run: databricks bundle deploy
+
+  pipeline_update:
+    name: "Run pipeline update"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: my_project
+
+    needs:
+      - deploy
+    steps:
+      - uses: actions/checkout@v3
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle run demo_project_job --refresh-all
