@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../bundle_schema.json
+# The main job for demo_project.
+resources:
+  jobs:
+    demo_project_job:
+      name: demo_project_job
+
+      schedule:
+        # Run every day at 8:37 AM
+        quartz_cron_expression: '44 37 8 * * ?'
+        timezone_id: Europe/Amsterdam
+
+      email_notifications:
+        on_failure:
+          - harsha.pasala@databricks.com
+
+      tasks:
+        - task_key: refresh_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.demo_project_pipeline.id}
